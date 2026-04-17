@@ -1770,6 +1770,14 @@ for (let tab of tabs) {
   });
 }
 
+//dashboard
+const dashboardDisappear =document.getElementById('authSubmitBtn')
+dashboardDisappear.addEventListener('click',()=>{
+    const element=document.getElementById("page-auth")
+    element.style.display = "none";
+
+})
+
 function openLink(url){window.open(url,'_blank');}
 </script>
 </body>
