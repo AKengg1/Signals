@@ -8,7 +8,7 @@ const pool = new Pool({
     rejectUnauthorized: false,
   },
 });
-
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 module.exports = pool;
 // Test connection on startup
 pool.connect((err, client, release) => {
