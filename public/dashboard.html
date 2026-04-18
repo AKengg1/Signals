@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Signals — Dashboard</title>
+<link rel="stylesheet" href="signals.css"/>
+<style>
+html, body { height: 100%; overflow: hidden; }
+body { position: relative; z-index: 1; }
+
+/* Role dashboards hidden by default */
+.role-dash { display: none; height: 100vh; }
+.role-dash.active { display: flex; }
+
+/* Recruiter accent */
+#dash-recruiter .nav-item.active { color: var(--green); background: var(--greenBg); border-left-color: var(--green); }
+#dash-recruiter .sb-logo .sb-title em { color: var(--green); }
+#dash-recruiter .btn-primary { background: var(--green); color: var(--bg); }
+#dash-recruiter .btn-primary:hover { background: #33e8b8; }
+#dash-recruiter .nav-badge { background: var(--green); }
+#dash-recruiter .notif-dot { background: var(--green); }
+
+/* Admin accent */
+#dash-admin .nav-item.active { color: var(--red); background: var(--redBg); border-left-color: var(--red); }
+#dash-admin .sb-logo .sb-title em { color: var(--red); }
+
+/* Profile header */
+.profile-hdr { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 26px; display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+.ph-info h2 { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.ph-bio { font-size: 13px; color: var(--text2); margin: 10px 0; line-height: 1.6; }
+.ph-meta { display: flex; gap: 18px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- SHARED MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modalTitle"></h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-ftr"  id="modalFtr"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STUDENT DASHBOARD
+══════════════════════════════════════════ -->
+<div id="dash-student" class="role-dash app-shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      <span class="sb-title">Sig<em>nals</em></span>
+    </div>
+    <div class="sb-user">
+      <div class="av av-sm av-cyan" id="sAvSm">AK</div>
+      <div><div class="su-name" id="sNameSm">…</div><div class="su-role">Student</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showSection('student','dashboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+      <div class="nav-item" onclick="showSection('student','projects',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>My Projects</div>
+      <div class="nav-item" onclick="showSection('student','challenges',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Challenges</div>
+      <div class="nav-item" onclick="showSection('student','leaderboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Leaderboard</div>
+      <div class="nav-section">Profile</div>
+      <div class="nav-item" onclick="showSection('student','profile',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile</div>
+      <div class="nav-item" onclick="showSection('student','messages',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages<span class="nav-badge">3</span></div>
+    </nav>
+    <div class="sb-bottom">
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:10px" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <h2 id="sPageTitle">Dashboard</h2>
+      <div class="topbar-r">
+        <div class="notif-btn" onclick="toast('You have 3 new messages','success')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="notif-dot"></div></div>
+        <div class="av av-sm av-cyan" id="sAvTop">AK</div>
+      </div>
+    </div>
+    <div class="content-area">
+
+      <!-- Dashboard -->
+      <div id="ss-dashboard" class="section active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="sc-label">Merit Points</div><div class="sc-value" style="color:var(--amber)" id="sdPts">—</div><div class="sc-change pos">+120 this week</div></div>
+          <div class="stat-card"><div class="sc-label">Global Rank</div><div class="sc-value" style="color:var(--cyan)" id="sdRank">—</div><div class="sc-change pos">Up 12 places</div></div>
+          <div class="stat-card"><div class="sc-label">Projects</div><div class="sc-value" id="sdProjCount">—</div><div class="sc-change neu" id="sdProjSub">—</div></div>
+          <div class="stat-card"><div class="sc-label">Recruiter Views</div><div class="sc-value" style="color:var(--green)">34</div><div class="sc-change pos">+8 this week</div></div>
+        </div>
+        <div class="level-card">
+          <div class="level-info">
+            <span class="level-badge" id="sdLevel">Level —</span>
+            <span style="font-size:12px;color:var(--text2)" id="sdXp">0 XP</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="sdXpBar" style="width:0%;background:linear-gradient(90deg,var(--violet),var(--violetL))"></div></div>
+        </div>
+        <div class="two-col" style="margin-bottom:24px">
+          <div><div class="section-hdr"><h3>Skill strength</h3></div><div class="card" id="sdSkills"></div></div>
+          <div><div class="section-hdr"><h3>Badges earned</h3></div><div class="badge-grid" id="sdBadges"></div></div>
+        </div>
+        <div class="section-hdr"><h3>Recent projects</h3><button class="btn btn-outline btn-sm" onclick="showSection('student','projects',null)">View all</button></div>
+        <div class="projects-grid" id="sdProjects"></div>
+      </div>
+
+      <!-- Projects -->
+      <div id="ss-projects" class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div><h3 style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:3px">My Projects</h3><p style="font-size:13px;color:var(--text2)">Showcase your work and earn merit points</p></div>
+          <button class="btn btn-primary" onclick="openAddProjectModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Project</button>
+        </div>
+        <div class="filter-row">
+          <div class="search-wrap" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" placeholder="Search projects…" oninput="filterMyProjects(this.value)"/></div>
+          <select class="filter-select" onchange="filterMyProjectsBySkill(this.value)"><option value="">All skills</option><option>React</option><option>Python</option><option>Node.js</option><option>UI/UX</option><option>ML</option></select>
+        </div>
+        <div class="projects-grid" id="spGrid"></div>
+      </div>
+
+      <!-- Challenges -->
+      <div id="ss-challenges" class="section">
+        <div style="margin-bottom:20px"><h3 style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:3px">Skill Challenges</h3><p style="font-size:13px;color:var(--text2)">Complete timed tasks to prove your skills and earn bonus points</p></div>
+        <div id="scGrid"></div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div id="ss-leaderboard" class="section">
+        <div class="section-hdr" style="margin-bottom:20px">
+          <h3 style="font-size:16px">Global Leaderboard</h3>
+          <select class="filter-select" onchange="loadLeaderboard(this.value)"><option value="">All Skills</option><option>React</option><option>Python</option><option>UI/UX</option><option>Node.js</option></select>
+        </div>
+        <div class="lb-wrap" id="slGrid"></div>
+      </div>
+
+      <!-- Profile -->
+      <div id="ss-profile" class="section">
+        <div class="profile-hdr">
+          <div class="av av-lg av-cyan" id="spAvatar">AK</div>
+          <div class="ph-info" style="flex:1">
+            <h2 id="spName">…</h2>
+            <div class="tags-row" id="spTags" style="margin:8px 0"></div>
+            <p class="ph-bio" id="spBio">—</p>
+            <div class="ph-meta">
+              <span style="color:var(--amber);font-weight:700" id="spPts">0 pts</span>
+              <span style="color:var(--text2)" id="spRank">Rank —</span>
+              <span style="color:var(--green)" id="spProjCount">0 projects</span>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openEditProfileModal()">Edit Profile</button>
+        </div>
+        <div class="two-col">
+          <div><div class="section-hdr"><h3>Skills</h3></div><div class="card" id="spSkills"></div></div>
+          <div><div class="section-hdr"><h3>Badges</h3></div><div class="badge-grid" id="spBadges"></div></div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="ss-messages" class="section">
+        <div class="msg-layout">
+          <div class="msg-list" id="smList"></div>
+          <div class="msg-thread">
+            <div class="msg-head"><div class="av av-sm av-amber">TM</div><div><div style="font-size:14px;font-weight:600">TechMate HR</div><div style="font-size:12px;color:var(--green)">Online</div></div></div>
+            <div class="msg-body" id="smBody">
+              <div class="bubble theirs">Hi! We reviewed your portfolio and are impressed. Would you be open to a quick chat?</div>
+              <div class="bubble mine">Absolutely! I'd love to learn more about the opportunity.</div>
+              <div class="bubble theirs">Great. We're looking for a React developer for a 6-month contract.</div>
+            </div>
+            <div class="msg-input-row">
+              <input class="msg-input" id="smInput" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg('sm')"/>
+              <button class="btn btn-primary btn-sm" onclick="sendMsg('sm')">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     RECRUITER DASHBOARD
+══════════════════════════════════════════ -->
+<div id="dash-recruiter" class="role-dash app-shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-mark" style="background:var(--green)"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      <span class="sb-title">Sig<em>nals</em></span>
+    </div>
+    <div class="sb-user">
+      <div class="av av-sm av-green" id="rAvSm">PM</div>
+      <div><div class="su-name" id="rNameSm">…</div><div class="su-role" style="color:var(--green)">Recruiter</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-section">Discover</div>
+      <div class="nav-item active" onclick="showSection('recruiter','dashboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+      <div class="nav-item" onclick="showSection('recruiter','browse',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Browse Talent</div>
+      <div class="nav-item" onclick="showSection('recruiter','shortlist',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Shortlist<span class="nav-badge" id="rSlCount">0</span></div>
+      <div class="nav-section">Account</div>
+      <div class="nav-item" onclick="showSection('recruiter','messages',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</div>
+    </nav>
+    <div class="sb-bottom">
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:10px" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
+    </div>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <h2 id="rPageTitle">Dashboard</h2>
+      <div class="topbar-r">
+        <div class="notif-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="notif-dot"></div></div>
+        <div class="av av-sm av-green" id="rAvTop">PM</div>
+      </div>
+    </div>
+    <div class="content-area">
+
+      <!-- Dashboard -->
+      <div id="rs-dashboard" class="section active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="sc-label">Candidates Viewed</div><div class="sc-value" style="color:var(--cyan)">142</div><div class="sc-change pos">+22 this week</div></div>
+          <div class="stat-card"><div class="sc-label">Shortlisted</div><div class="sc-value" style="color:var(--green)" id="rdShortlist">0</div><div class="sc-change neu">Active pipeline</div></div>
+          <div class="stat-card"><div class="sc-label">Messages Sent</div><div class="sc-value">18</div><div class="sc-change pos">+4 replies</div></div>
+          <div class="stat-card"><div class="sc-label">Response Rate</div><div class="sc-value" style="color:var(--amber)">74%</div><div class="sc-change pos">Above average</div></div>
+        </div>
+        <div class="two-col">
+          <div><div class="section-hdr"><h3>Top performers</h3><button class="btn btn-outline btn-sm" onclick="showSection('recruiter','browse',null)">Browse all</button></div><div class="lb-wrap" id="rdTop"></div></div>
+          <div><div class="section-hdr"><h3>Shortlisted</h3><button class="btn btn-outline btn-sm" onclick="showSection('recruiter','shortlist',null)">View all</button></div><div id="rdSlPreview"></div></div>
+        </div>
+      </div>
+
+      <!-- Browse -->
+      <div id="rs-browse" class="section">
+        <div style="margin-bottom:20px"><h3 style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:3px">Browse Talent</h3><p style="font-size:13px;color:var(--text2)">Profiles are anonymous — no college, no location bias</p></div>
+        <div class="filter-row">
+          <div class="search-wrap" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" placeholder="Search by skill…" oninput="filterCandidates(this.value)"/></div>
+          <select class="filter-select" id="browseSkill" onchange="loadCandidates()"><option value="">All skills</option><option>React</option><option>Python</option><option>Node.js</option><option>UI/UX</option><option>ML</option><option>Marketing</option></select>
+        </div>
+        <div class="candidates-grid" id="rbGrid"></div>
+      </div>
+
+      <!-- Shortlist -->
+      <div id="rs-shortlist" class="section">
+        <div style="margin-bottom:20px"><h3 style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:3px">Shortlisted Candidates</h3><p style="font-size:13px;color:var(--text2)">Your saved talent pipeline</p></div>
+        <div class="candidates-grid" id="rslGrid"></div>
+      </div>
+
+      <!-- Messages -->
+      <div id="rs-messages" class="section">
+        <div class="msg-layout">
+          <div class="msg-list" id="rmList"></div>
+          <div class="msg-thread">
+            <div class="msg-head"><div class="av av-sm av-cyan">AK</div><div><div style="font-size:14px;font-weight:600">Candidate #A-047</div><div style="font-size:12px;color:var(--text2)">React · Node.js · Rank #47</div></div></div>
+            <div class="msg-body" id="rmBody">
+              <div class="bubble mine">Hi! We reviewed your portfolio and are impressed.</div>
+              <div class="bubble theirs">Absolutely! I'd love to learn more about the opportunity.</div>
+            </div>
+            <div class="msg-input-row">
+              <input class="msg-input" id="rmInput" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg('rm')"/>
+              <button class="btn btn-primary btn-sm" onclick="sendMsg('rm')">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ADMIN DASHBOARD
+══════════════════════════════════════════ -->
+<div id="dash-admin" class="role-dash app-shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-mark" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <span class="sb-title">Sig<em>nals</em></span>
+    </div>
+    <div class="sb-user">
+      <div class="av av-sm av-red">AD</div>
+      <div><div class="su-name">Admin Panel</div><div class="su-role" style="color:var(--red)">Super Admin</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-section">Management</div>
+      <div class="nav-item active" onclick="showSection('admin','dashboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview</div>
+      <div class="nav-item" onclick="showSection('admin','users',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Users</div>
+      <div class="nav-item" onclick="showSection('admin','projects',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/></svg>Projects</div>
+      <div class="nav-item" onclick="showSection('admin','scoring',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Scoring</div>
+    </nav>
+    <div class="sb-bottom">
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:10px" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
+    </div>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <h2 id="aPageTitle">Overview</h2>
+      <div class="topbar-r"><span style="font-size:11px;background:var(--redBg);color:var(--red);padding:4px 12px;border-radius:99px;font-weight:700;border:1px solid rgba(255,77,109,.2);text-transform:uppercase;letter-spacing:.05em">Admin</span></div>
+    </div>
+    <div class="content-area">
+
+      <!-- Overview -->
+      <div id="as-dashboard" class="section active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="sc-label">Total Users</div><div class="sc-value">13,244</div><div class="sc-change pos">+340 this week</div></div>
+          <div class="stat-card"><div class="sc-label">Active Students</div><div class="sc-value" style="color:var(--cyan)">12,400</div><div class="sc-change pos">+280</div></div>
+          <div class="stat-card"><div class="sc-label">Recruiters</div><div class="sc-value" style="color:var(--green)">844</div><div class="sc-change pos">+60</div></div>
+          <div class="stat-card"><div class="sc-label">Pending Projects</div><div class="sc-value" style="color:var(--amber)" id="adPending">—</div><div class="sc-change neg">Needs review</div></div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="section-hdr"><h3>Recent signups</h3></div>
+            <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead><tbody id="adSignups">
+              <tr><td>Riya Shah</td><td style="color:var(--text2)">Student</td><td><span class="status-pill status-active">active</span></td></tr>
+              <tr><td>Mark Chen</td><td style="color:var(--text2)">Recruiter</td><td><span class="status-pill status-pending">pending</span></td></tr>
+              <tr><td>Priya Nair</td><td style="color:var(--text2)">Student</td><td><span class="status-pill status-active">active</span></td></tr>
+            </tbody></table></div>
+          </div>
+          <div>
+            <div class="section-hdr"><h3>Platform activity</h3></div>
+            <div class="card">
+              <div class="skill-bar-wrap"><div class="skill-bar-header"><span>Project submissions</span><span style="color:var(--cyan)">84%</span></div><div class="bar-track"><div class="bar-fill" style="width:84%;background:var(--cyan)"></div></div></div>
+              <div class="skill-bar-wrap"><div class="skill-bar-header"><span>Challenge completions</span><span style="color:var(--green)">71%</span></div><div class="bar-track"><div class="bar-fill" style="width:71%;background:var(--green)"></div></div></div>
+              <div class="skill-bar-wrap"><div class="skill-bar-header"><span>Recruiter searches</span><span style="color:var(--amber)">92%</span></div><div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--amber)"></div></div></div>
+              <div class="skill-bar-wrap"><div class="skill-bar-header"><span>Messages sent</span><span style="color:var(--violet)">65%</span></div><div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--violet)"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div id="as-users" class="section">
+        <div class="filter-row"><div class="search-wrap" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" placeholder="Search users…"/></div><select class="filter-select"><option>All roles</option><option>Student</option><option>Recruiter</option></select></div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>User</th><th>Role</th><th>Points</th><th>Status</th><th>Joined</th><th>Action</th></tr></thead><tbody id="auTable"></tbody></table></div>
+      </div>
+
+      <!-- Projects moderation -->
+      <div id="as-projects" class="section">
+        <div style="margin-bottom:16px"><h3 style="font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:4px">Project Moderation</h3><p style="font-size:13px;color:var(--text2)">Review and approve submitted projects</p></div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Project</th><th>Author</th><th>Skills</th><th>Status</th><th>Action</th></tr></thead><tbody id="apTable"></tbody></table></div>
+      </div>
+
+      <!-- Scoring -->
+      <div id="as-scoring" class="section">
+        <div style="margin-bottom:20px"><h3 style="font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:4px">Scoring Engine</h3><p style="font-size:13px;color:var(--text2)">Adjust weights that determine merit points</p></div>
+        <div class="scoring-card">
+          <div class="range-wrap"><div class="range-hdr"><span>Project complexity weight</span><span style="color:var(--cyan)" id="w1v">40%</span></div><input type="range" min="0" max="100" value="40" oninput="document.getElementById('w1v').textContent=this.value+'%'"/></div>
+          <div class="range-wrap"><div class="range-hdr"><span>Peer review weight</span><span style="color:var(--green)" id="w2v">25%</span></div><input type="range" min="0" max="100" value="25" oninput="document.getElementById('w2v').textContent=this.value+'%'"/></div>
+          <div class="range-wrap"><div class="range-hdr"><span>Recruiter engagement weight</span><span style="color:var(--amber)" id="w3v">20%</span></div><input type="range" min="0" max="100" value="20" oninput="document.getElementById('w3v').textContent=this.value+'%'"/></div>
+          <div class="range-wrap"><div class="range-hdr"><span>Challenge completion weight</span><span style="color:var(--violet)" id="w4v">15%</span></div><input type="range" min="0" max="100" value="15" oninput="document.getElementById('w4v').textContent=this.value+'%'"/></div>
+          <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:18px;font-size:12px;color:var(--text2);border:1px solid var(--line)"><b style="color:var(--amber)">Anti-gaming:</b> Votes from accounts under 7 days old are ignored. Rapid same-IP reviews are auto-flagged.</div>
+          <button class="btn btn-primary" onclick="toast('Scoring weights saved!','success')">Save configuration</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="signals-shared.js"></script>
+<script>
+// ── Auth guard ────────────────────────────────
+const user = getUser();
+if (!user) window.location.href = 'auth.html';
+
+// ── Boot correct dashboard ────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!user) return;
+  document.getElementById('dash-' + user.role)?.classList.add('active');
+  if (user.role === 'student')   initStudent();
+  if (user.role === 'recruiter') initRecruiter();
+  if (user.role === 'admin')     initAdmin();
+});
+
+// ── Section switching ─────────────────────────
+function showSection(role, name, navEl) {
+  const prefix = { student: 'ss', recruiter: 'rs', admin: 'as' }[role];
+  const titleEl = { student: 'sPageTitle', recruiter: 'rPageTitle', admin: 'aPageTitle' }[role];
+  document.querySelectorAll(`#dash-${role} .section`).forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById(`${prefix}-${name}`);
+  if (sec) sec.classList.add('active');
+  document.getElementById(titleEl).textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  document.querySelectorAll(`#dash-${role} .nav-item`).forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+
+  // Lazy load on first visit
+  if (role === 'student') {
+    if (name === 'projects')    renderProjectGrid('spGrid', _myProjects);
+    if (name === 'challenges')  renderChallengeCards();
+    if (name === 'leaderboard') loadLeaderboard('');
+    if (name === 'messages')    renderStudentMessages();
+  }
+  if (role === 'recruiter') {
+    if (name === 'browse')    loadCandidates();
+    if (name === 'shortlist') loadShortlist();
+    if (name === 'messages')  renderRecruiterMessages();
+  }
+  if (role === 'admin') {
+    if (name === 'users')    loadAdminUsers();
+    if (name === 'projects') loadAdminProjects();
+  }
+}
+
+// ══════════════════════════════════════════════
+// STUDENT
+// ══════════════════════════════════════════════
+let _myProjects = [];
+
+async function initStudent() {
+  const u = user;
+  const ini = initials(u.full_name);
+  document.getElementById('sAvSm').textContent = ini;
+  document.getElementById('sAvTop').textContent = ini;
+  document.getElementById('sNameSm').textContent = u.full_name || u.email;
+
+  // Stats
+  document.getElementById('sdPts').textContent   = (u.merit_points || 0).toLocaleString();
+  document.getElementById('sdRank').textContent  = u.global_rank ? '#' + u.global_rank : '—';
+  document.getElementById('sdXp').textContent    = (u.xp || 0) + ' XP';
+  document.getElementById('sdLevel').innerHTML   = `<svg viewBox="0 0 24 24" fill="var(--violetL)" width="12" height="12"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Level ${u.level||1} — ${levelTitle(u.level||1)}`;
+  setTimeout(() => { const pct = Math.min(((u.xp || 0) % 500) / 5, 100); document.getElementById('sdXpBar').style.width = pct + '%'; }, 200);
+
+  // Projects
+  const res = await api('/api/projects/mine');
+  _myProjects = (res && res.data) ? res.data : DEMO_PROJECTS;
+  document.getElementById('sdProjCount').textContent = _myProjects.length;
+  document.getElementById('sdProjSub').textContent   = _myProjects.filter(p => p.status === 'pending').length + ' under review';
+  renderProjectGrid('sdProjects', _myProjects.slice(0, 3));
+
+  // Skills & badges
+  renderSkillBars('sdSkills', DEMO_SKILLS);
+  renderBadges('sdBadges', BADGES);
+
+  // Profile section
+  document.getElementById('spAvatar').textContent = initials(u.full_name);
+  document.getElementById('spName').textContent   = u.full_name || '—';
+  document.getElementById('spBio').textContent    = u.bio || 'No bio added yet.';
+  document.getElementById('spPts').textContent    = (u.merit_points || 0).toLocaleString() + ' pts';
+  document.getElementById('spRank').textContent   = u.global_rank ? 'Rank #' + u.global_rank : 'Unranked';
+  document.getElementById('spProjCount').textContent = _myProjects.filter(p => p.status === 'approved').length + ' projects';
+  const colors = ['tag-cyan','tag-violet','tag-amber','tag-green'];
+  document.getElementById('spTags').innerHTML = DEMO_SKILLS.slice(0, 4).map((s, i) => `<span class="tag ${colors[i]}">${s.name}</span>`).join('');
+  renderSkillBars('spSkills', DEMO_SKILLS);
+  renderBadges('spBadges', BADGES);
+}
+
+function filterMyProjects(q) { renderProjectGrid('spGrid', _myProjects.filter(p => p.title.toLowerCase().includes(q.toLowerCase()))); }
+function filterMyProjectsBySkill(s) { renderProjectGrid('spGrid', s ? _myProjects.filter(p => (p.skills || []).some(sk => (sk.name || sk) === s)) : _myProjects); }
+
+function renderChallengeCards() {
+  document.getElementById('scGrid').innerHTML = CHALLENGES.map(c => `<div class="challenge-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h4 style="font-family:var(--font-display);font-size:14px;font-weight:700">${c.title}</h4>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tag diff-${c.difficulty}">${c.difficulty}</span>
+        <div class="pts-pill"><svg viewBox="0 0 24 24" fill="var(--amber)" width="12" height="12"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>${c.points} pts</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">${c.desc}</p>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:14px;font-size:12px;color:var(--text2)"><span>Skill: <b style="color:var(--text)">${c.skill}</b></span><span>Time: <b style="color:var(--text)">${c.time}</b></span></div>
+      <button class="btn btn-primary btn-sm" onclick="toast('Challenge started — good luck!','success')">Start Challenge</button>
+    </div>
+  </div>`).join('');
+}
+
+async function loadLeaderboard(skill) {
+  const el = document.getElementById('slGrid');
+  el.innerHTML = '<div class="loading-block"><div class="spinner"></div></div>';
+  const data = await api('/api/candidates/leaderboard' + (skill ? `?skill=${skill}` : ''));
+  const rows = (data && data.data) ? data.data : DEMO_CANDIDATES.slice().sort((a, b) => a.global_rank - b.global_rank);
+  el.innerHTML = rows.map((u, i) => {
+    const pos = u.position || (i + 1);
+    const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+    const isMe  = user && u.user_id === user.id;
+    return `<div class="lb-row ${isMe ? 'lb-me' : ''}">
+      <div class="lb-rank ${pos===1?'gold':pos===2?'silver':pos===3?'bronze':''}">${medal}</div>
+      <div class="av av-sm ${u.avatar_color||'av-cyan'}" style="font-size:10px">${(u.anonymous_code||'?').slice(0,2)}</div>
+      <div><div style="font-size:13px;font-weight:600">${u.anonymous_code}${isMe?' (you)':''}</div><div style="font-size:11px;color:var(--text2)">${(u.skills||[]).slice(0,2).map(s=>s.name||s).join(' · ')}</div></div>
+      <div class="lb-score">${(u.merit_points||0).toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStudentMessages() {
+  const msgs = [{initials:'TM',color:'av-amber',name:'TechMate HR',preview:'We reviewed your portfolio...'},{initials:'DF',color:'av-green',name:'DataFlow Inc',preview:'Interested in your ML project'},{initials:'SX',color:'av-cyan',name:'StartupX',preview:'Available for a quick call?'}];
+  document.getElementById('smList').innerHTML = msgs.map((m, i) => `<div class="conv-item ${i===0?'active':''}"><div class="av av-sm ${m.color}">${m.initials}</div><div><div class="cn">${m.name}</div><div class="cp">${m.preview}</div></div></div>`).join('');
+}
+
+function openAddProjectModal() {
+  openModal('Add new project', `<div>
+    <div class="field"><label>Project title</label><input type="text" id="mpTitle" placeholder="My awesome project"/></div>
+    <div class="field"><label>Description</label><textarea id="mpDesc" placeholder="Describe what you built…"></textarea></div>
+    <div class="field"><label>GitHub URL</label><input type="url" id="mpGithub" placeholder="https://github.com/…"/></div>
+    <div class="field"><label>Live demo URL (optional)</label><input type="url" id="mpDemo" placeholder="https://…"/></div>
+    <div class="field"><label>Skills (comma-separated)</label><input type="text" id="mpSkills" placeholder="React, Node.js, PostgreSQL"/></div>
+  </div>`, [
+    { label: 'Cancel', cls: 'btn-outline', fn: 'closeModal()' },
+    { label: 'Submit project', cls: 'btn-primary', fn: 'submitProject()' }
+  ]);
+}
+
+async function submitProject() {
+  const title = document.getElementById('mpTitle')?.value;
+  const desc  = document.getElementById('mpDesc')?.value;
+  if (!title || !desc) { toast('Title and description are required', 'error'); return; }
+  const skills = (document.getElementById('mpSkills')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
+  const body = { title, description: desc, github_url: document.getElementById('mpGithub')?.value || null, demo_url: document.getElementById('mpDemo')?.value || null, skills };
+  const res = await api('/api/projects', { method: 'POST', body: JSON.stringify(body) });
+  closeModal();
+  const newProj = res || { ...body, id: Date.now(), emoji: '🚀', merit_points: 0, status: 'pending' };
+  _myProjects.unshift(newProj);
+  renderProjectGrid('spGrid', _myProjects);
+  renderProjectGrid('sdProjects', _myProjects.slice(0, 3));
+  document.getElementById('sdProjCount').textContent = _myProjects.length;
+  toast('Project submitted for review!', 'success');
+}
+
+function openEditProfileModal() {
+  openModal('Edit profile', `<div>
+    <div class="field"><label>Display name</label><input type="text" id="epName" value="${user.full_name || ''}"/></div>
+    <div class="field"><label>Bio</label><textarea id="epBio">${user.bio || ''}</textarea></div>
+    <div style="background:var(--greenBg);border:1px solid rgba(34,211,160,.2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--green)">✓ College name and location are never shown to recruiters.</div>
+  </div>`, [
+    { label: 'Cancel', cls: 'btn-outline', fn: 'closeModal()' },
+    { label: 'Save changes', cls: 'btn-primary', fn: 'saveProfile()' }
+  ]);
+}
+
+async function saveProfile() {
+  const name = document.getElementById('epName')?.value;
+  const bio  = document.getElementById('epBio')?.value;
+  await api('/api/auth/me', { method: 'PUT', body: JSON.stringify({ full_name: name, bio }) });
+  closeModal();
+  user.full_name = name; user.bio = bio;
+  sessionStorage.setItem('signals_user', JSON.stringify(user));
+  document.getElementById('spName').textContent = name;
+  document.getElementById('spBio').textContent  = bio;
+  toast('Profile updated!', 'success');
+}
+
+// ══════════════════════════════════════════════
+// RECRUITER
+// ══════════════════════════════════════════════
+let _allCandidates = [];
+
+async function initRecruiter() {
+  const u = user;
+  const ini = initials(u.full_name);
+  document.getElementById('rAvSm').textContent  = ini;
+  document.getElementById('rAvTop').textContent = ini;
+  document.getElementById('rNameSm').textContent = u.full_name || u.email;
+
+  // Top performers
+  const lb = await api('/api/candidates/leaderboard?limit=5');
+  const rows = (lb && lb.data) ? lb.data : DEMO_CANDIDATES.slice(0, 5);
+  document.getElementById('rdTop').innerHTML = rows.map((c, i) => {
+    const pos = i + 1;
+    return `<div class="lb-row" onclick="openCandidateModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+      <div class="lb-rank ${pos===1?'gold':pos===2?'silver':pos===3?'bronze':''}">${pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos}</div>
+      <div class="av av-sm ${c.avatar_color||'av-cyan'}" style="font-size:10px">${(c.anonymous_code||'?').slice(0,2)}</div>
+      <div><div style="font-size:13px;font-weight:600">${c.anonymous_code}</div><div style="font-size:11px;color:var(--text2)">${(c.skills||[]).slice(0,2).map(s=>s.name||s).join(' · ')}</div></div>
+      <div class="lb-score">${(c.merit_points||0).toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
+  // Shortlist
+  const sl = await api('/api/candidates/shortlist');
+  const slList = (sl && sl.data) ? sl.data : [];
+  updateSlBadge(slList.length);
+  renderSlPreview(slList);
+}
+
+function updateSlBadge(n) {
+  document.getElementById('rSlCount').textContent = n;
+  document.getElementById('rdShortlist').textContent = n;
+}
+
+function renderSlPreview(list) {
+  const el = document.getElementById('rdSlPreview');
+  if (!list.length) { el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">No candidates shortlisted yet.<br><a href="#" onclick="showSection('recruiter','browse',null)" style="color:var(--cyan)">Browse talent →</a></div>`; return; }
+  el.innerHTML = list.slice(0, 4).map(c => `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;cursor:pointer">
+    <div class="av av-sm ${c.avatar_color||'av-cyan'}" style="font-size:10px">${(c.anonymous_code||'?').slice(0,2)}</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:600">${c.anonymous_code}</div><div style="font-size:11px;color:var(--text2)">${(c.skills||[]).slice(0,1).map(s=>s.name||s).join('')}</div></div>
+    <span class="tag tag-green">Shortlisted</span>
+  </div>`).join('');
+}
+
+async function loadCandidates() {
+  const el = document.getElementById('rbGrid');
+  el.innerHTML = '<div class="loading-block"><div class="spinner"></div></div>';
+  const skill = document.getElementById('browseSkill')?.value || '';
+  const data  = await api('/api/candidates' + (skill ? `?skill=${encodeURIComponent(skill)}` : ''));
+  _allCandidates = (data && data.data) ? data.data : DEMO_CANDIDATES;
+  renderCandidatesGrid('rbGrid', _allCandidates);
+}
+
+function filterCandidates(q) {
+  renderCandidatesGrid('rbGrid', _allCandidates.filter(c =>
+    c.anonymous_code.toLowerCase().includes(q.toLowerCase()) ||
+    (c.skills || []).some(s => (s.name || s).toLowerCase().includes(q.toLowerCase()))
+  ));
+}
+
+async function loadShortlist() {
+  const el = document.getElementById('rslGrid');
+  el.innerHTML = '<div class="loading-block"><div class="spinner"></div></div>';
+  const data = await api('/api/candidates/shortlist');
+  const list = (data && data.data) ? data.data : [];
+  if (!list.length) { el.innerHTML = `<div class="loading-block" style="grid-column:1/-1">No candidates shortlisted yet. <a href="#" onclick="showSection('recruiter','browse',null)" style="color:var(--cyan)">Browse talent →</a></div>`; return; }
+  renderCandidatesGrid('rslGrid', list);
+}
+
+function renderRecruiterMessages() {
+  document.getElementById('rmList').innerHTML = DEMO_CANDIDATES.slice(0, 4).map((c, i) => `<div class="conv-item ${i===0?'active':''}">
+    <div class="av av-sm ${c.avatar_color||'av-cyan'}" style="font-size:10px">${(c.anonymous_code||'?').slice(0,2)}</div>
+    <div><div class="cn">${c.anonymous_code}</div><div class="cp">${(c.skills||[]).slice(0,1).map(s=>s.name||s).join('')} · Rank #${c.global_rank}</div></div>
+  </div>`).join('');
+}
+
+async function toggleShortlist(code, btn) {
+  const adding = btn && !btn.className.includes('btn-green');
+  if (adding) {
+    await api(`/api/candidates/shortlist/${code}`, { method: 'POST' });
+    if (btn) { btn.textContent = 'Shortlisted'; btn.className = 'btn btn-sm btn-green'; }
+    toast('Added to shortlist!', 'success');
+  } else {
+    await api(`/api/candidates/shortlist/${code}`, { method: 'DELETE' });
+    if (btn) { btn.textContent = 'Shortlist'; btn.className = 'btn btn-sm btn-outline'; }
+    toast('Removed from shortlist', 'success');
+  }
+}
+function goToMessages() { showSection(user.role, 'messages', null); }
+
+// ══════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════
+async function initAdmin() {
+  const res = await api('/api/projects?status=pending&limit=1');
+  document.getElementById('adPending').textContent = res ? res.pagination.total : '—';
+}
+
+async function loadAdminProjects() {
+  const data = await api('/api/projects?status=pending&limit=20');
+  const projs = (data && data.data) ? data.data : DEMO_PROJECTS;
+  document.getElementById('apTable').innerHTML = projs.map(p => {
+    const skills = (p.skills||[]).slice(0,2).map(s=>`<span class="tag tag-violet" style="margin-right:3px">${s.name||s}</span>`).join('');
+    const actions = p.status === 'pending'
+      ? `<button class="btn btn-green btn-xs" onclick="approveProject(${p.id},this)">Approve</button> <button class="btn btn-red btn-xs" onclick="toast('Project rejected','success')">Reject</button>`
+      : `<button class="btn btn-outline btn-xs">Review</button>`;
+    return `<tr><td style="font-weight:500">${p.title}</td><td style="color:var(--text2)">Anonymous</td><td>${skills}</td><td><span class="status-pill status-${p.status}">${p.status}</span></td><td><div style="display:flex;gap:6px">${actions}</div></td></tr>`;
+  }).join('');
+}
+
+async function approveProject(id) {
+  await api(`/api/projects/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved', merit_points: 300 }) });
+  toast('Project approved!', 'success');
+  loadAdminProjects();
+}
+
+function loadAdminUsers() {
+  const USERS = [
+    { name:'Arjun Kapoor',  role:'Student',   points:2840,  status:'active',  joined:'Jan 2024' },
+    { name:'Sneha Rao',     role:'Student',   points:3920,  status:'active',  joined:'Nov 2023' },
+    { name:'Priya Mehta',   role:'Recruiter', points:'—',   status:'active',  joined:'Mar 2024' },
+    { name:'Vikram Singh',  role:'Student',   points:1200,  status:'pending', joined:'Apr 2024' },
+    { name:'SpamBot99',     role:'Student',   points:50,    status:'banned',  joined:'Apr 2024' },
+  ];
+  document.getElementById('auTable').innerHTML = USERS.map(u => `<tr>
+    <td style="font-weight:500">${u.name}</td>
+    <td style="color:var(--text2)">${u.role}</td>
+    <td style="color:var(--amber)">${u.points}</td>
+    <td><span class="status-pill status-${u.status}">${u.status}</span></td>
+    <td style="color:var(--text2)">${u.joined}</td>
+    <td><div style="display:flex;gap:6px">${u.status!=='banned'?`<button class="btn btn-red btn-xs" onclick="toast('User banned','success')">Ban</button>`:`<button class="btn btn-green btn-xs" onclick="toast('User unbanned','success')">Unban</button>`}</div></td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// MESSAGES (shared send)
+// ══════════════════════════════════════════════
+function sendMsg(inputId) {
+  const bodyMap = { sm: 'smBody', rm: 'rmBody' };
+  const val = document.getElementById(inputId + 'Input')?.value.trim();
+  if (!val) return;
+  const bodyEl = document.getElementById(bodyMap[inputId]);
+  const b = document.createElement('div');
+  b.className = 'bubble mine'; b.textContent = val;
+  bodyEl.appendChild(b);
+  document.getElementById(inputId + 'Input').value = '';
+  b.scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => {
+    const r = document.createElement('div');
+    r.className = 'bubble theirs'; r.textContent = "Thanks! We'll follow up shortly.";
+    bodyEl.appendChild(r);
+    r.scrollIntoView({ behavior: 'smooth' });
+  }, 1200);
+}
+</script>
+</body>
+</html>

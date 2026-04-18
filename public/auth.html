@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Signals — Sign in</title>
+<link rel="stylesheet" href="signals.css"/>
+<style>
+html, body { height: 100%; }
+body {
+  display: flex; flex-direction: column;
+  min-height: 100vh; overflow-x: hidden;
+}
+
+/* ── Decorative background ── */
+.auth-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.auth-bg::before {
+  content: ''; position: absolute; bottom: -100px; left: -100px;
+  width: 600px; height: 600px;
+  background: radial-gradient(ellipse, rgba(124,92,252,.07) 0%, transparent 70%);
+}
+.auth-bg::after {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 500px; height: 500px;
+  background: radial-gradient(ellipse, rgba(0,212,255,.06) 0%, transparent 70%);
+}
+
+/* ── Layout ── */
+.auth-page {
+  flex: 1; display: flex; position: relative; z-index: 1;
+}
+
+/* LEFT PANEL */
+.auth-left {
+  width: 420px; flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  padding: 32px 36px; overflow-y: auto;
+}
+.auth-back {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  margin-bottom: 36px; transition: color .2s;
+}
+.auth-back:hover { color: var(--text); }
+.auth-back svg { width: 14px; height: 14px; }
+.auth-form-wrap { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.auth-form-wrap h1 { font-family: var(--font-display); font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.auth-form-wrap .auth-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+
+/* Tabs */
+.auth-tabs { display: flex; background: var(--bg3); border-radius: var(--r); padding: 4px; margin-bottom: 24px; }
+.auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; transition: all .2s; }
+.auth-tab.active { background: var(--bg5); color: var(--text); }
+
+/* Role picker */
+.role-picker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.role-btn {
+  padding: 12px 8px; border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--bg3); color: var(--text2); cursor: pointer; text-align: center;
+  font-size: 11px; font-weight: 700; transition: all .2s; display: flex; flex-direction: column; gap: 7px; align-items: center;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.role-btn svg { width: 20px; height: 20px; }
+.role-btn.selected { border-color: var(--cyan); background: var(--cyanBg); color: var(--cyan); }
+
+/* Demo row */
+.demo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* API config */
+.api-config { margin-top: 20px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--line); border-radius: var(--r); }
+.api-config label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.api-config input { flex: 1; background: transparent; border: none; color: var(--text2); font-size: 12px; outline: none; min-width: 0; }
+.api-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; flex-shrink: 0; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* RIGHT PANEL */
+.auth-right {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px; position: relative; overflow: hidden;
+}
+.auth-right-content { max-width: 480px; width: 100%; text-align: center; }
+.preview-card {
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: var(--r2); padding: 24px; margin-bottom: 20px;
+  text-align: left; position: relative;
+}
+.preview-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: var(--r2);
+  background: linear-gradient(135deg, rgba(0,212,255,.04), transparent);
+  pointer-events: none;
+}
+.preview-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px; }
+.preview-stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.preview-stat { background: var(--bg3); border-radius: var(--r); padding: 12px; text-align: center; }
+.preview-stat .pv { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+.preview-stat .pl { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.preview-skill { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+.preview-skill-bar { flex: 1; height: 3px; background: var(--bg4); border-radius: 99px; overflow: hidden; margin: 0 10px; }
+.preview-skill-fill { height: 100%; border-radius: 99px; }
+.testimonials { display: flex; flex-direction: column; gap: 12px; }
+.testimonial { background: var(--bg3); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; text-align: left; }
+.testimonial p { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+.testimonial-author { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.testimonial-author strong { color: var(--text); }
+.testimonial-author span { color: var(--text3); }
+
+@media (max-width: 800px) {
+  .auth-page { flex-direction: column; }
+  .auth-left { width: 100%; border-right: none; border-bottom: 1px solid var(--line); }
+  .auth-right { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="auth-bg"></div>
+
+<div class="auth-page page-enter">
+
+  <!-- ── LEFT: FORM ── -->
+  <div class="auth-left">
+    <div class="auth-back" onclick="window.location.href='index.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to home
+    </div>
+
+    <!-- Logo -->
+    <div class="logo" style="margin-bottom:32px">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      <span class="logo-text">Sig<em>nals</em></span>
+    </div>
+
+    <div class="auth-form-wrap">
+      <h1 id="authTitle">Welcome back</h1>
+      <p class="auth-sub" id="authSub">Sign in to your account</p>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin"    onclick="switchTab('login')">Sign in</div>
+        <div class="auth-tab"        id="tabRegister" onclick="switchTab('register')">Create account</div>
+      </div>
+
+      <!-- Role picker (register only) -->
+      <div id="roleSection" style="display:none;margin-bottom:20px">
+        <p style="font-size:11px;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:600">I am a…</p>
+        <div class="role-picker">
+          <button class="role-btn" id="roleStudent" onclick="selectRole('student')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>Student
+          </button>
+          <button class="role-btn" id="roleRecruiter" onclick="selectRole('recruiter')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>Recruiter
+          </button>
+          <button class="role-btn" id="roleAdmin" onclick="selectRole('admin')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="err-msg" id="errMsg"></div>
+
+      <!-- Fields -->
+      <div class="field"><label>Email address</label><input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="field" id="nameField"    style="display:none"><label>Full name</label><input type="text" id="authName" placeholder="Your full name"/></div>
+      <div class="field" id="companyField" style="display:none"><label>Company name</label><input type="text" id="authCompany" placeholder="Your company"/></div>
+      <div class="field"><label>Password</label><input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleAuth()"/></div>
+
+      <button class="btn btn-primary btn-full" id="authBtn" onclick="handleAuth()">Sign in</button>
+
+      <div class="divider">or try a demo</div>
+      <div class="demo-row">
+        <button class="btn btn-outline btn-sm" onclick="demoLogin('student')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>Student
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="demoLogin('recruiter')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="2" y="7" width="20" height="14" rx="2"/></svg>Recruiter
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="demoLogin('admin')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin
+        </button>
+      </div>
+
+      <!-- API config -->
+      <div class="api-config">
+        <label>API</label>
+        <input id="apiUrlInput" value="http://localhost:3000" placeholder="http://localhost:3000" onchange="updateApiBase(this.value)"/>
+        <div class="api-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: PREVIEW ── -->
+  <div class="auth-right">
+    <div class="auth-right-content">
+      <p style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:24px">What awaits you inside</p>
+
+      <!-- Candidate preview card -->
+      <div class="preview-card">
+        <div class="preview-label">Your anonymous profile</div>
+        <div class="preview-stat-row">
+          <div class="preview-stat"><div class="pv" style="color:var(--amber)">2,840</div><div class="pl">Merit pts</div></div>
+          <div class="preview-stat"><div class="pv" style="color:var(--cyan)">#47</div><div class="pl">Global rank</div></div>
+          <div class="preview-stat"><div class="pv">8</div><div class="pl">Projects</div></div>
+        </div>
+        <div style="margin-top:4px">
+          <div class="preview-skill"><span style="font-size:12px;width:70px">React</span><div class="preview-skill-bar"><div class="preview-skill-fill" style="width:92%;background:var(--cyan)"></div></div><span style="font-size:12px;color:var(--cyan);font-weight:600">92%</span></div>
+          <div class="preview-skill"><span style="font-size:12px;width:70px">Node.js</span><div class="preview-skill-bar"><div class="preview-skill-fill" style="width:78%;background:var(--green)"></div></div><span style="font-size:12px;color:var(--green);font-weight:600">78%</span></div>
+          <div class="preview-skill"><span style="font-size:12px;width:70px">Python</span><div class="preview-skill-bar"><div class="preview-skill-fill" style="width:65%;background:var(--violet)"></div></div><span style="font-size:12px;color:var(--violet);font-weight:600">65%</span></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:14px">
+          <span class="tag tag-cyan">React</span>
+          <span class="tag tag-green">Node.js</span>
+          <span class="tag tag-violet">Python</span>
+          <span class="tag tag-amber">UI/UX</span>
+        </div>
+      </div>
+
+      <!-- Testimonials -->
+      <div class="testimonials">
+        <div class="testimonial">
+          <p>"Got 3 recruiter messages within my first week — they only saw my projects, nothing else."</p>
+          <div class="testimonial-author"><span class="av av-sm av-cyan" style="font-size:11px">AK</span><div><strong>Candidate A-047</strong><span> · React Developer</span></div></div>
+        </div>
+        <div class="testimonial">
+          <p>"We found our best hire through Signals. The anonymous filter removed all our unconscious biases."</p>
+          <div class="testimonial-author"><span class="av av-sm av-green" style="font-size:10px">TM</span><div><strong>TechMate HR</strong><span> · Recruiter</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="signals-shared.js"></script>
+<script>
+// Read URL params to pre-fill mode/role
+const params = new URLSearchParams(window.location.search);
+let authMode = params.get('mode') || 'login';
+let selectedRole = params.get('role') || 'student';
+
+// If already logged in, skip straight to dashboard
+const existing = getUser();
+if (existing) window.location.href = 'dashboard.html';
+
+// Init
+switchTab(authMode);
+selectRole(selectedRole);
+
+function updateApiBase(val) {
+  sessionStorage.setItem('signals_api', val);
+}
+
+function switchTab(tab) {
+  authMode = tab;
+  const isReg = tab === 'register';
+  document.getElementById('tabLogin').classList.toggle('active', !isReg);
+  document.getElementById('tabRegister').classList.toggle('active', isReg);
+  document.getElementById('roleSection').style.display  = isReg ? 'block' : 'none';
+  document.getElementById('nameField').style.display    = isReg ? 'block' : 'none';
+  document.getElementById('authTitle').textContent = isReg ? 'Create your account' : 'Welcome back';
+  document.getElementById('authSub').textContent   = isReg ? 'Join thousands of skilled students' : 'Sign in to your account';
+  document.getElementById('authBtn').textContent   = isReg ? 'Create account' : 'Sign in';
+  document.getElementById('errMsg').classList.remove('show');
+  // Update URL without reload
+  const url = new URL(window.location);
+  url.searchParams.set('mode', tab);
+  window.history.replaceState({}, '', url);
+}
+
+function selectRole(r) {
+  selectedRole = r;
+  document.getElementById('companyField').style.display = r === 'recruiter' ? 'block' : 'none';
+  ['Student', 'Recruiter', 'Admin'].forEach(x =>
+    document.getElementById('role' + x).classList.toggle('selected', x.toLowerCase() === r)
+  );
+}
+
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  const btn   = document.getElementById('authBtn');
+  const errEl = document.getElementById('errMsg');
+  errEl.classList.remove('show');
+
+  if (!email || !pass) {
+    errEl.textContent = 'Please fill in all fields.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.textContent = 'Loading…'; btn.disabled = true;
+
+  try {
+    let data;
+    if (authMode === 'register') {
+      const name    = document.getElementById('authName').value.trim();
+      const company = document.getElementById('authCompany')?.value.trim();
+      if (!name) { errEl.textContent = 'Please enter your full name.'; errEl.classList.add('show'); btn.textContent = 'Create account'; btn.disabled = false; return; }
+      data = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password: pass, full_name: name, role: selectedRole, company_name: company })
+      });
+    } else {
+      data = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password: pass })
+      });
+    }
+
+    if (!data) {
+      errEl.textContent = 'Cannot reach the API. Try a demo login below.';
+      errEl.classList.add('show');
+      btn.textContent = authMode === 'register' ? 'Create account' : 'Sign in';
+      btn.disabled = false;
+      return;
+    }
+
+    setSession(data.token, data.user);
+    window.location.href = 'dashboard.html';
+
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  }
+
+  btn.textContent = authMode === 'register' ? 'Create account' : 'Sign in';
+  btn.disabled = false;
+}
+
+async function demoLogin(role) {
+  const btn = document.getElementById('authBtn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  // Try real API first
+  const creds = {
+    student:   ['student@demo.com',   'demo12345'],
+    recruiter: ['recruiter@demo.com', 'demo12345'],
+    admin:     ['admin@demo.com',     'demo12345'],
+  };
+  const [email, password] = creds[role];
+  const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+
+  if (data && data.token) {
+    setSession(data.token, data.user);
+  } else {
+    // Fallback demo session
+    setSession('demo-token', DEMO[role]);
+  }
+
+  window.location.href = 'dashboard.html';
+}
+</script>
+</body>
+</html>
