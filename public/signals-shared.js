@@ -1,7 +1,7 @@
 /* signals-shared.js — loaded by every page */
 
 // ── API ──────────────────────────────────────
-const API_BASE = sessionStorage.getItem('signals_api') || 'https://your-backend-service.up.railway.app';
+const API_BASE = sessionStorage.getItem('signals_api') || 'https://signals-production-3600.up.railway.app';
 
 async function api(path, options = {}) {
   const token = sessionStorage.getItem('signals_token');
