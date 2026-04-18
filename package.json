@@ -1,23 +1,11 @@
 {
   "name": "merit",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/app.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AKengg1/Signals.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/AKengg1/Signals/issues"
-  },
-  "homepage": "https://github.com/AKengg1/Signals#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
