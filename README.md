@@ -1,6 +1,6 @@
 # Signals 🗼 
  
-> **Hire on merit. Not on pedigree.**
+> **Hire on merit. Not on digree.**
  
 Signals is a full-stack web platform that connects students and recruiters based purely on **skills and real work** — not college names or backgrounds. Students showcase projects, earn skill-based points, and get discovered by recruiters who see only what truly matters: what you can build.
 
